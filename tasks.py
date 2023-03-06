@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from lnbits import bolt11
 from lnbits.core.models import Payment
 from lnbits.core.services import pay_invoice
+from lnbits.core.crud import get_standalone_payment
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 
@@ -68,6 +69,12 @@ async def on_invoice_paid(payment: Payment):
         )
 
     invoice = bolt11.decode(params["pr"])
+
+    lnurlp_payment = await get_standalone_payment(invoice.payment_hash)
+    # (avoid loops)
+    # do not scrub yourself! :)
+    if lnurlp_payment and lnurlp_payment.wallet_id == payment.wallet_id:
+        return
 
     if invoice.amount_msat != rounded_amount:
         raise HTTPException(
