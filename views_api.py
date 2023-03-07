@@ -1,15 +1,18 @@
 from http import HTTPStatus
 
-from loguru import logger
 from fastapi import Depends, Query
+from loguru import logger
 from starlette.exceptions import HTTPException
 
 from lnbits.core.crud import get_user
-from lnbits.decorators import WalletTypeInfo, get_key_type, require_admin_key, check_admin
+from lnbits.decorators import (
+    WalletTypeInfo,
+    check_admin,
+    get_key_type,
+    require_admin_key,
+)
 
-
-
-from . import scrub_ext, scheduled_tasks
+from . import scheduled_tasks, scrub_ext
 from .crud import (
     create_scrub_link,
     delete_scrub_link,
