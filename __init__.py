@@ -2,7 +2,6 @@ import asyncio
 from typing import List
 
 from fastapi import APIRouter
-from fastapi.staticfiles import StaticFiles
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
@@ -15,7 +14,6 @@ scheduled_tasks: List[asyncio.Task] = []
 scrub_static_files = [
     {
         "path": "/scrub/static",
-        "app": StaticFiles(directory="lnbits/extensions/scrub/static"),
         "name": "scrub_static",
     }
 ]
@@ -24,7 +22,7 @@ scrub_ext: APIRouter = APIRouter(prefix="/scrub", tags=["scrub"])
 
 
 def scrub_renderer():
-    return template_renderer(["lnbits/extensions/scrub/templates"])
+    return template_renderer(["scrub/templates"])
 
 
 from .tasks import wait_for_paid_invoices
