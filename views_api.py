@@ -12,7 +12,7 @@ from lnbits.decorators import (
     require_admin_key,
 )
 
-from . import scheduled_tasks, scrub_ext
+from . import scrub_ext
 from .crud import (
     create_scrub_link,
     delete_scrub_link,
@@ -111,14 +111,3 @@ async def api_link_delete(link_id, wallet: WalletTypeInfo = Depends(require_admi
 
     await delete_scrub_link(link_id)
     return "", HTTPStatus.NO_CONTENT
-
-
-@scrub_ext.delete("/api/v1", status_code=HTTPStatus.OK, dependencies=[Depends(check_admin)])
-async def api_stop():
-    for t in scheduled_tasks:
-        try:
-            t.cancel()
-        except Exception as ex:
-            logger.warning(ex)
-
-    return {"success": True}
