@@ -4,10 +4,9 @@ from http import HTTPStatus
 from math import floor
 from urllib.parse import urlparse
 
+import bolt11
 import httpx
 from fastapi import HTTPException
-
-from lnbits import bolt11
 from lnbits.core.crud import get_standalone_payment
 from lnbits.core.models import Payment
 from lnbits.core.services import pay_invoice
@@ -55,11 +54,11 @@ async def on_invoice_paid(payment: Payment):
             )
             if r.is_error:
                 raise httpx.ConnectError("issue with scrub callback")
-        except (httpx.ConnectError, httpx.RequestError):
+        except (httpx.ConnectError, httpx.RequestError) as exc:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
                 detail=f"Failed to connect to {domain}.",
-            )
+            ) from exc
 
     params = json.loads(r.text)
     if params.get("status") == "ERROR":
@@ -79,7 +78,10 @@ async def on_invoice_paid(payment: Payment):
     if invoice.amount_msat != rounded_amount:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"{domain} returned an invalid invoice. Expected {payment.amount} msat, got {invoice.amount_msat}.",
+            detail=f"""
+            {domain} returned an invalid invoice.
+            Expected {payment.amount} msat, got {invoice.amount_msat}.
+            """,
         )
 
     payment_hash = await pay_invoice(

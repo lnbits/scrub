@@ -1,9 +1,8 @@
 from sqlite3 import Row
 
+from lnurl import encode as lnurl_encode
 from pydantic import BaseModel
 from starlette.requests import Request
-
-from lnbits.lnurl import encode as lnurl_encode
 
 
 class CreateScrubLink(BaseModel):
@@ -25,4 +24,4 @@ class ScrubLink(BaseModel):
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("scrub.api_lnurl_response", link_id=self.id)
-        return lnurl_encode(url)
+        return lnurl_encode(str(url))

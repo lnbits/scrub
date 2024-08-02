@@ -1,34 +1,23 @@
 import asyncio
-from loguru import logger
 
 from fastapi import APIRouter
+from loguru import logger
 
-from lnbits.db import Database
-from lnbits.helpers import template_renderer
-from lnbits.tasks import create_permanent_unique_task
+from .crud import db
+from .tasks import wait_for_paid_invoices
+from .views import scrub_generic_router
+from .views_api import scrub_api_router
 
-db = Database("ext_scrub")
-
+scheduled_tasks: list[asyncio.Task] = []
 scrub_static_files = [
     {
         "path": "/scrub/static",
         "name": "scrub_static",
     }
 ]
-
 scrub_ext: APIRouter = APIRouter(prefix="/scrub", tags=["scrub"])
-
-
-def scrub_renderer():
-    return template_renderer(["scrub/templates"])
-
-
-from .tasks import wait_for_paid_invoices
-from .views import *  # noqa: F401,F403
-from .views_api import *  # noqa: F401,F403
-
-
-scheduled_tasks: list[asyncio.Task] = []
+scrub_ext.include_router(scrub_generic_router)
+scrub_ext.include_router(scrub_api_router)
 
 
 def scrub_stop():
@@ -40,5 +29,10 @@ def scrub_stop():
 
 
 def scrub_start():
+    from lnbits.tasks import create_permanent_unique_task
+
     task = create_permanent_unique_task("ext_scrub", wait_for_paid_invoices)
     scheduled_tasks.append(task)
+
+
+__all__ = ["db", "scrub_ext", "scrub_start", "scrub_stop", "scrub_static_files"]

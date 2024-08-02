@@ -1,18 +1,13 @@
 from http import HTTPStatus
 
-from fastapi import Depends, Query
-from loguru import logger
-from starlette.exceptions import HTTPException
-
+from fastapi import APIRouter, Depends, HTTPException, Query
 from lnbits.core.crud import get_user
+from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import (
-    WalletTypeInfo,
-    check_admin,
     get_key_type,
     require_admin_key,
 )
 
-from . import scrub_ext
 from .crud import (
     create_scrub_link,
     delete_scrub_link,
@@ -23,8 +18,10 @@ from .crud import (
 )
 from .models import CreateScrubLink
 
+scrub_api_router = APIRouter()
 
-@scrub_ext.get("/api/v1/links", status_code=HTTPStatus.OK)
+
+@scrub_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
     wallet: WalletTypeInfo = Depends(get_key_type),
     all_wallets: bool = Query(False),
@@ -38,14 +35,14 @@ async def api_links(
     try:
         return [link.dict() for link in await get_scrub_links(wallet_ids)]
 
-    except:
+    except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail="No SCRUB links made yet",
-        )
+        ) from exc
 
 
-@scrub_ext.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+@scrub_api_router.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(link_id, wallet: WalletTypeInfo = Depends(get_key_type)):
     link = await get_scrub_link(link_id)
 
@@ -62,8 +59,8 @@ async def api_link_retrieve(link_id, wallet: WalletTypeInfo = Depends(get_key_ty
     return link
 
 
-@scrub_ext.post("/api/v1/links", status_code=HTTPStatus.CREATED)
-@scrub_ext.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+@scrub_api_router.post("/api/v1/links", status_code=HTTPStatus.CREATED)
+@scrub_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_scrub_create_or_update(
     data: CreateScrubLink,
     link_id=None,
@@ -95,7 +92,7 @@ async def api_scrub_create_or_update(
     return link
 
 
-@scrub_ext.delete("/api/v1/links/{link_id}")
+@scrub_api_router.delete("/api/v1/links/{link_id}")
 async def api_link_delete(link_id, wallet: WalletTypeInfo = Depends(require_admin_key)):
     link = await get_scrub_link(link_id)
 
