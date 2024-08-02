@@ -1,9 +1,11 @@
 from typing import List, Optional, Union
 
+from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
-from . import db
 from .models import CreateScrubLink, ScrubLink
+
+db = Database("ext_scrub")
 
 
 async def create_scrub_link(data: CreateScrubLink) -> ScrubLink:
