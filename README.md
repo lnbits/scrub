@@ -1,4 +1,5 @@
 # Scrub - <small>[LNbits](https://github.com/lnbits/lnbits) extension</small>
+
 <small>For more about LNBits extension check [this tutorial](https://github.com/lnbits/lnbits/wiki/LNbits-Extensions)</small>
 
 ## Automatically forward funds (Scrub) that get paid to the wallet to an LNURLpay or Lightning Address
