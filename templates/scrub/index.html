@@ -150,5 +150,5 @@
   </q-dialog>
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
-<script src="/scrub/static/js/index.js"></script>
+<script src="{{ static_url_for('scrub/static', path='js/index.js') }}"></script>
 {% endblock %}
