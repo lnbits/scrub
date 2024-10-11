@@ -20,9 +20,9 @@
         <q-table
           dense
           flat
-          :data="payLinks"
+          :rows="payLinks"
           row-key="id"
-          :pagination.sync="payLinksTable.pagination"
+          v-model.pagination="payLinksTable.pagination"
         >
           {% raw %}
           <template v-slot:header="props">
