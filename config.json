@@ -2,6 +2,6 @@
   "name": "Scrub",
   "short_description": "Pass payments to LNURLp/LNaddress",
   "tile": "/scrub/static/image/scrub.png",
-  "contributors": ["arcbtc", "talvasconcelos"],
-  "min_lnbits_version": "0.12.5"
+  "contributors": ["arcbtc", "talvasconcelos", "dni"],
+  "min_lnbits_version": "1.0.0"
 }

@@ -10,7 +10,6 @@ from fastapi import HTTPException
 from lnbits.core.crud import get_standalone_payment
 from lnbits.core.models import Payment
 from lnbits.core.services import pay_invoice
-from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 
 from .crud import get_scrub_by_wallet
@@ -18,7 +17,7 @@ from .crud import get_scrub_by_wallet
 
 async def wait_for_paid_invoices():
     invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, get_current_extension_name())
+    register_invoice_listener(invoice_queue, "ext_scrub")
 
     while True:
         payment = await invoice_queue.get()
@@ -27,7 +26,7 @@ async def wait_for_paid_invoices():
 
 async def on_invoice_paid(payment: Payment):
     # (avoid loops)
-    if payment.extra.get("tag") == "scrubed":
+    if not payment.extra or payment.extra.get("tag") == "scrubed":
         # already scrubbed
         return
 
