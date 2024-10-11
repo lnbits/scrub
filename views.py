@@ -14,5 +14,5 @@ def scrub_renderer():
 @scrub_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return scrub_renderer().TemplateResponse(
-        "scrub/index.html", {"request": request, "user": user.dict()}
+        "scrub/index.html", {"request": request, "user": user.json()}
     )
