@@ -25,9 +25,7 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
-    # (avoid loops)
     if not payment.extra or payment.extra.get("tag") == "scrubed":
-        # already scrubbed
         return
 
     scrub_link = await get_scrub_by_wallet(payment.wallet_id)
@@ -83,15 +81,9 @@ async def on_invoice_paid(payment: Payment):
             """,
         )
 
-    payment_hash = await pay_invoice(
+    await pay_invoice(
         wallet_id=payment.wallet_id,
         payment_request=params["pr"],
         description=data["description"],
         extra={"tag": "scrubed"},
     )
-
-    return {
-        "payment_hash": payment_hash,
-        # maintain backwards compatibility with API clients:
-        "checking_id": payment_hash,
-    }
