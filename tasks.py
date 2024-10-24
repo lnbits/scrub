@@ -10,7 +10,6 @@ from fastapi import HTTPException
 from lnbits.core.crud import get_standalone_payment
 from lnbits.core.models import Payment
 from lnbits.core.services import pay_invoice
-from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 
 from .crud import get_scrub_by_wallet
@@ -18,7 +17,7 @@ from .crud import get_scrub_by_wallet
 
 async def wait_for_paid_invoices():
     invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, get_current_extension_name())
+    register_invoice_listener(invoice_queue, "ext_scrub")
 
     while True:
         payment = await invoice_queue.get()
@@ -26,13 +25,10 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
-    # (avoid loops)
-    if payment.extra.get("tag") == "scrubed":
-        # already scrubbed
+    if payment.extra and payment.extra.get("tag") == "scrubed":
         return
 
     scrub_link = await get_scrub_by_wallet(payment.wallet_id)
-
     if not scrub_link:
         return
 
@@ -84,15 +80,9 @@ async def on_invoice_paid(payment: Payment):
             """,
         )
 
-    payment_hash = await pay_invoice(
+    await pay_invoice(
         wallet_id=payment.wallet_id,
         payment_request=params["pr"],
         description=data["description"],
         extra={"tag": "scrubed"},
     )
-
-    return {
-        "payment_hash": payment_hash,
-        # maintain backwards compatibility with API clients:
-        "checking_id": payment_hash,
-    }

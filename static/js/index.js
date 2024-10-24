@@ -1,17 +1,13 @@
-/* globals Quasar, Vue, _, VueQrcode, windowMixin, LNbits, LOCALE */
-
-Vue.component(VueQrcode.name, VueQrcode)
-
-var locationPath = [
+const locationPath = [
   window.location.protocol,
   '//',
   window.location.host,
   window.location.pathname
 ].join('')
 
-var mapScrubLink = obj => {
+const mapScrubLink = obj => {
   obj._data = _.clone(obj)
-  obj.date = Quasar.utils.date.formatDate(
+  obj.date = Quasar.date.formatDate(
     new Date(obj.time * 1000),
     'YYYY-MM-DD HH:mm'
   )
@@ -21,7 +17,7 @@ var mapScrubLink = obj => {
   return obj
 }
 
-new Vue({
+window.app = Vue.createApp({
   el: '#vue',
   mixins: [windowMixin],
   data() {
@@ -114,7 +110,7 @@ new Vue({
         })
     },
     deleteScrubLink(linkId) {
-      var link = _.findWhere(this.payLinks, {id: linkId})
+      const link = _.findWhere(this.payLinks, {id: linkId})
 
       LNbits.utils
         .confirmDialog('Are you sure you want to delete this pay link?')
@@ -136,7 +132,7 @@ new Vue({
   },
   created() {
     if (this.g.user.wallets.length) {
-      var getScrubLinks = this.getScrubLinks
+      const getScrubLinks = this.getScrubLinks
       getScrubLinks()
     }
   }

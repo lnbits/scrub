@@ -20,11 +20,10 @@
         <q-table
           dense
           flat
-          :data="payLinks"
+          :rows="payLinks"
           row-key="id"
-          :pagination.sync="payLinksTable.pagination"
+          v-model.pagination="payLinksTable.pagination"
         >
-          {% raw %}
           <template v-slot:header="props">
             <q-tr :props="props" style="text-align: left">
               <q-th>Wallet</q-th>
@@ -35,9 +34,9 @@
           </template>
           <template v-slot:body="props">
             <q-tr :props="props">
-              <q-td>{{ props.row.wallet }}</q-td>
-              <q-td>{{ props.row.description }}</q-td>
-              <q-td>{{ props.row.payoraddress }}</q-td>
+              <q-td v-text="props.row.wallet"></q-td>
+              <q-td v-text="props.row.description"></q-td>
+              <q-td v-text="props.row.payoraddress"></q-td>
               <q-td auto-width>
                 <q-btn
                   flat
@@ -58,7 +57,6 @@
               </q-td>
             </q-tr>
           </template>
-          {% endraw %}
         </q-table>
       </q-card-section>
     </q-card>
@@ -152,5 +150,5 @@
   </q-dialog>
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
-<script src="/scrub/static/js/index.js"></script>
+<script src="{{ static_url_for('scrub/static', path='js/index.js') }}"></script>
 {% endblock %}
