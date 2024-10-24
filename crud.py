@@ -11,7 +11,7 @@ db = Database("ext_scrub")
 async def create_scrub_link(data: CreateScrubLink) -> ScrubLink:
     scrub_id = urlsafe_short_hash()
     scrub = ScrubLink(id=scrub_id, **data.dict())
-    await db.insert("scrub_links", scrub)
+    await db.insert("scrub.scrub_links", scrub)
     return scrub
 
 
@@ -34,7 +34,7 @@ async def get_scrub_links(wallet_ids: Union[str, list[str]]) -> list[ScrubLink]:
 
 
 async def update_scrub_link(link: ScrubLink) -> ScrubLink:
-    await db.update("scrub_links", link)
+    await db.update("scrub.scrub_links", link)
     return link
 
 

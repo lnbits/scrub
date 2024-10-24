@@ -3,6 +3,7 @@ import json
 from http import HTTPStatus
 from math import floor
 from urllib.parse import urlparse
+from loguru import logger
 
 import bolt11
 import httpx
@@ -25,11 +26,10 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
-    if not payment.extra or payment.extra.get("tag") == "scrubed":
+    if payment.extra and payment.extra.get("tag") == "scrubed":
         return
 
     scrub_link = await get_scrub_by_wallet(payment.wallet_id)
-
     if not scrub_link:
         return
 
