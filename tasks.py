@@ -3,7 +3,6 @@ import json
 from http import HTTPStatus
 from math import floor
 from urllib.parse import urlparse
-from loguru import logger
 
 import bolt11
 import httpx
