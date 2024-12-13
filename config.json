@@ -1,4 +1,5 @@
 {
+  "id": "scrub"
   "name": "Scrub",
   "short_description": "Pass payments to LNURLp/LNaddress",
   "tile": "/scrub/static/image/scrub.png",
