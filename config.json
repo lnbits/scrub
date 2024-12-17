@@ -1,10 +1,26 @@
 {
-  "id": "scrub"
+  "id": "scrub",
   "name": "Scrub",
   "short_description": "Pass payments to LNURLp/LNaddress",
   "tile": "/scrub/static/image/scrub.png",
   "min_lnbits_version": "1.0.0",
-  "contributors": ["arcbtc", "talvasconcelos", "dni"],
+  "contributors": [
+    {
+      "name": "arcbtc",
+      "uri": "https://github.com/arcbtc",
+      "role": "Contributor"
+    },
+    {
+      "name": "talvasconcelos",
+      "uri": "https://github.com/talvasconcelos",
+      "role": "Contributor"
+    },
+    {
+      "name": "dni",
+      "uri": "https://github.com/dni",
+      "role": "Developer"
+    }
+  ],
   "images": [],
   "description_md": "https://raw.githubusercontent.com/lnbits/scrub/main/description.md",
   "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/scrub/main/toc.md",
