@@ -40,6 +40,7 @@ async def on_invoice_paid(payment: Payment):
 
     payable_amount = payment.amount - fee_reserve_total(payment.amount)
 
+    # # DECODE LNURLP OR LNADDRESS
     try:
         payment_request = await get_pr_from_lnurl(
             scrub_link.payoraddress, payable_amount
@@ -50,7 +51,6 @@ async def on_invoice_paid(payment: Payment):
             detail=f"Failed to get payment request: {e}",
         ) from e
 
-    # # DECODE LNURLP OR LNADDRESS
     rounded_amount = floor(payable_amount / 1000) * 1000
     invoice = bolt11.decode(payment_request)
 
