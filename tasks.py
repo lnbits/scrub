@@ -4,7 +4,8 @@ from math import floor
 
 import bolt11
 from fastapi import HTTPException
-from lnbits.core.crud import get_standalone_payment
+
+from lnbits.core.crud import get_standalone_payment, get_wallet
 from lnbits.core.models import Payment
 from lnbits.core.services import (
     fee_reserve_total,
@@ -33,7 +34,18 @@ async def on_invoice_paid(payment: Payment):
     if not scrub_link:
         return
 
-    payable_amount = payment.amount - fee_reserve_total(payment.amount)
+    wallet = await get_wallet(payment.wallet_id)
+    if not wallet:
+        return
+
+    wallet_balance = wallet.balance_msat
+
+    payable_amount = payment.amount
+
+    # only subtract fee, if not enough balance
+    if wallet_balance <= payment.amount:
+        payable_amount = payment.amount - fee_reserve_total(payment.amount)
+
     rounded_amount = floor(payable_amount / 1000) * 1000
 
     # DECODE LNURLP OR LNADDRESS
@@ -56,9 +68,18 @@ async def on_invoice_paid(payment: Payment):
         return
 
     # PAY INVOICE
+    internal_memo = (
+        (f"{int(payment.amount - rounded_amount) / 1000} sats kept for fees")
+        if payment.amount > rounded_amount
+        else None
+    )
+
     await pay_invoice(
         wallet_id=payment.wallet_id,
         payment_request=payment_request,
         description="Scrubed",
-        extra={"tag": "scrubed"},
+        extra={
+            "tag": "scrubed",
+            "internal_memo": internal_memo,
+        },
     )
