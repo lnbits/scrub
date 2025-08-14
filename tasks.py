@@ -4,7 +4,6 @@ from math import floor
 
 import bolt11
 from fastapi import HTTPException
-
 from lnbits.core.crud import get_standalone_payment, get_wallet
 from lnbits.core.models import Payment
 from lnbits.core.services import (
