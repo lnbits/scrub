@@ -26,7 +26,7 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
-    if payment.extra and payment.extra.get("tag") == "scrubed":
+    if payment.extra and payment.extra.get("tag") == "scrubbed":
         return
 
     scrub_link = await get_scrub_by_wallet(payment.wallet_id)
@@ -76,9 +76,9 @@ async def on_invoice_paid(payment: Payment):
     await pay_invoice(
         wallet_id=payment.wallet_id,
         payment_request=payment_request,
-        description="Scrubed",
+        description="Scrubbed",
         extra={
-            "tag": "scrubed",
+            "tag": "scrubbed",
             "internal_memo": internal_memo,
         },
     )
