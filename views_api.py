@@ -12,9 +12,9 @@ from lnbits.decorators import (
 from .crud import (
     create_scrub_link,
     delete_scrub_link,
+    get_scrub_by_wallet,
     get_scrub_link,
     get_scrub_links,
-    unique_scrubed_wallet,
     update_scrub_link,
 )
 from .models import CreateScrubLink, ScrubLink
@@ -39,7 +39,7 @@ async def api_links(
 @scrub_api_router.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(
     link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
-):
+) -> ScrubLink:
     link = await get_scrub_link(link_id)
 
     if not link:
@@ -61,7 +61,7 @@ async def api_scrub_create_or_update(
     data: CreateScrubLink,
     link_id: Optional[str] = None,
     wallet: WalletTypeInfo = Depends(require_admin_key),
-):
+) -> ScrubLink:
     if link_id:
         link = await get_scrub_link(link_id)
 
@@ -80,8 +80,8 @@ async def api_scrub_create_or_update(
 
         link = await update_scrub_link(link)
     else:
-        wallet_has_scrub = await unique_scrubed_wallet(wallet_id=data.wallet)
-        if wallet_has_scrub > 0:
+        wallet_has_scrub = await get_scrub_by_wallet(wallet_id=data.wallet)
+        if not wallet_has_scrub:
             raise HTTPException(
                 detail="Wallet is already being Scrubbed",
                 status_code=HTTPStatus.FORBIDDEN,

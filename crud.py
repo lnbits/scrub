@@ -48,12 +48,3 @@ async def get_scrub_by_wallet(wallet_id) -> Optional[ScrubLink]:
         {"wallet": wallet_id},
         ScrubLink,
     )
-
-
-async def unique_scrubed_wallet(wallet_id):
-    result = await db.execute(
-        "SELECT COUNT(wallet) FROM scrub.scrub_links WHERE wallet = :wallet",
-        {"wallet": wallet_id},
-    )
-    count = result.fetchone()[0]
-    return count
