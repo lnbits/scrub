@@ -38,7 +38,6 @@ async def on_invoice_paid(payment: Payment):
         return
 
     wallet_balance = wallet.balance_msat
-
     payable_amount = payment.amount
 
     # only subtract fee, if not enough balance

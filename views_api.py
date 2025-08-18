@@ -39,7 +39,7 @@ async def api_links(
 @scrub_api_router.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(
     link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
-):
+) -> ScrubLink:
     link = await get_scrub_link(link_id)
 
     if not link:
@@ -61,7 +61,7 @@ async def api_scrub_create_or_update(
     data: CreateScrubLink,
     link_id: Optional[str] = None,
     wallet: WalletTypeInfo = Depends(require_admin_key),
-):
+) -> ScrubLink:
     if link_id:
         link = await get_scrub_link(link_id)
 
