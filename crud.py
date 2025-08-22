@@ -1,4 +1,3 @@
-
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
