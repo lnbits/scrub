@@ -80,7 +80,7 @@ async def api_scrub_create_or_update(
         link = await update_scrub_link(link)
     else:
         wallet_has_scrub = await get_scrub_by_wallet(wallet_id=data.wallet)
-        if not wallet_has_scrub:
+        if wallet_has_scrub:
             raise HTTPException(
                 detail="Wallet is already being Scrubbed",
                 status_code=HTTPStatus.FORBIDDEN,
