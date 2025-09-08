@@ -35,4 +35,4 @@ def scrub_start():
     scheduled_tasks.append(task)
 
 
-__all__ = ["db", "scrub_ext", "scrub_start", "scrub_stop", "scrub_static_files"]
+__all__ = ["db", "scrub_ext", "scrub_start", "scrub_static_files", "scrub_stop"]

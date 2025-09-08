@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from lnbits.core.crud import get_user
@@ -59,7 +58,7 @@ async def api_link_retrieve(
 @scrub_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_scrub_create_or_update(
     data: CreateScrubLink,
-    link_id: Optional[str] = None,
+    link_id: str | None = None,
     wallet: WalletTypeInfo = Depends(require_admin_key),
 ) -> ScrubLink:
     if link_id:
@@ -81,7 +80,7 @@ async def api_scrub_create_or_update(
         link = await update_scrub_link(link)
     else:
         wallet_has_scrub = await get_scrub_by_wallet(wallet_id=data.wallet)
-        if not wallet_has_scrub:
+        if wallet_has_scrub:
             raise HTTPException(
                 detail="Wallet is already being Scrubbed",
                 status_code=HTTPStatus.FORBIDDEN,

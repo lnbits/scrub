@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
@@ -15,7 +13,7 @@ async def create_scrub_link(data: CreateScrubLink) -> ScrubLink:
     return scrub
 
 
-async def get_scrub_link(link_id: str) -> Optional[ScrubLink]:
+async def get_scrub_link(link_id: str) -> ScrubLink | None:
     return await db.fetchone(
         "SELECT * FROM scrub.scrub_links WHERE id = :id",
         {"id": link_id},
@@ -23,7 +21,7 @@ async def get_scrub_link(link_id: str) -> Optional[ScrubLink]:
     )
 
 
-async def get_scrub_links(wallet_ids: Union[str, list[str]]) -> list[ScrubLink]:
+async def get_scrub_links(wallet_ids: str | list[str]) -> list[ScrubLink]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
 
@@ -42,7 +40,7 @@ async def delete_scrub_link(link_id: str) -> None:
     await db.execute("DELETE FROM scrub.scrub_links WHERE id = :id", {"id": link_id})
 
 
-async def get_scrub_by_wallet(wallet_id) -> Optional[ScrubLink]:
+async def get_scrub_by_wallet(wallet_id) -> ScrubLink | None:
     return await db.fetchone(
         "SELECT * from scrub.scrub_links WHERE wallet = :wallet",
         {"wallet": wallet_id},
