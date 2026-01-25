@@ -1,3 +1,10 @@
-Automatically forward funds (Scrub) that get paid to the wallet to an LNURLpay or Lightning Address
+Automatically forward incoming payments to an LNURL or Lightning address or internal Wallet ID.
 
-SCRUB is a small but handy extension that allows a user to take advantage of all the functionalities inside LNbits and upon a payment received to your LNbits wallet, automatically forward it to your desired wallet via LNURL or LNAddress!
+Its functions include:
+
+- Configuring automatic forwarding destinations
+- Supporting LNURL-pay and Lightning address targets
+- Forwarding payments as they arrive
+- Maintaining your LNbits wallet as a pass-through
+
+A privacy-enhancing tool for users who want to automatically forward payments to their own Lightning address or cold storage wallet.
