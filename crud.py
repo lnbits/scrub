@@ -8,7 +8,7 @@ db = Database("ext_scrub")
 
 async def create_scrub_link(data: CreateScrubLink) -> ScrubLink:
     scrub_id = urlsafe_short_hash()
-    scrub = ScrubLink(id=scrub_id, **data.dict())
+    scrub = ScrubLink(id=scrub_id, **data.model_dump())
     await db.insert("scrub.scrub_links", scrub)
     return scrub
 
