@@ -1182,7 +1182,7 @@ wheels = [
 
 [[package]]
 name = "lnbits-scrub"
-version = "1.2.0"
+version = "1.2.2"
 source = { virtual = "." }
 dependencies = [
     { name = "lnbits" },
