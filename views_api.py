@@ -61,6 +61,11 @@ async def api_scrub_create_or_update(
     link_id: str | None = None,
     wallet: WalletTypeInfo = Depends(require_admin_key),
 ) -> ScrubLink:
+    if data.wallet != wallet.wallet.id:
+        raise HTTPException(
+            detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
+        )
+
     if link_id:
         link = await get_scrub_link(link_id)
 
