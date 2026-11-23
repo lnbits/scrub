@@ -79,8 +79,8 @@ async def api_scrub_create_or_update(
                 detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
             )
 
-        for k, v in data.model_dump().items():
-            setattr(link, k, v)
+        link.description = data.description
+        link.payoraddress = data.payoraddress
 
         link = await update_scrub_link(link)
     else:

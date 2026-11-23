@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from http import HTTPStatus
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -5,8 +6,8 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from lnbits.core.models import KeyType, Wallet, WalletTypeInfo
-from lnbits.decorators import require_admin_key
+from lnbits import decorators
+from lnbits.core.models import Wallet
 
 from .. import views_api
 from ..models import ScrubLink
@@ -21,33 +22,76 @@ def api(monkeypatch):
         adminkey="admin-key",
         inkey="invoice-key",
     )
-    key_info = WalletTypeInfo(key_type=KeyType.admin, wallet=wallet)
+    other_wallet = Wallet(
+        id="wallet-two",
+        user="user-two",
+        name="Other wallet",
+        adminkey="other-admin-key",
+        inkey="other-invoice-key",
+    )
+    wallets = (wallet, other_wallet)
+    wallets_by_key = {key: w for w in wallets for key in (w.adminkey, w.inkey)}
+    monkeypatch.setattr(decorators.db, "connect", nullcontext)
+    monkeypatch.setattr(
+        decorators,
+        "get_wallet_for_key",
+        AsyncMock(side_effect=lambda key, **_: wallets_by_key.get(key)),
+    )
+    monkeypatch.setattr(decorators, "_check_user_access", AsyncMock())
+
     link = ScrubLink(
         id="link-one",
         wallet=wallet.id,
         description="Original",
         payoraddress="original@example.com",
     )
+    other_link = ScrubLink(
+        id="link-two",
+        wallet=other_wallet.id,
+        description="Other original",
+        payoraddress="other@example.com",
+    )
+    links = {link.id: link, other_link.id: other_link}
     lookup = AsyncMock(return_value=None)
-    retrieve = AsyncMock(return_value=link)
     create = AsyncMock(return_value=link)
     update = AsyncMock(side_effect=lambda value: value)
+    delete = AsyncMock(side_effect=links.pop)
+    monkeypatch.setattr(views_api, "get_scrub_link", AsyncMock(side_effect=links.get))
+    monkeypatch.setattr(
+        views_api,
+        "get_scrub_links",
+        AsyncMock(
+            side_effect=lambda ids: [
+                item for item in links.values() if item.wallet in ids
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        views_api,
+        "get_user",
+        AsyncMock(
+            side_effect=lambda user_id: SimpleNamespace(
+                wallet_ids=[w.id for w in wallets if w.user == user_id]
+            )
+        ),
+    )
     monkeypatch.setattr(views_api, "get_scrub_by_wallet", lookup)
-    monkeypatch.setattr(views_api, "get_scrub_link", retrieve)
     monkeypatch.setattr(views_api, "create_scrub_link", create)
     monkeypatch.setattr(views_api, "update_scrub_link", update)
+    monkeypatch.setattr(views_api, "delete_scrub_link", delete)
     app = FastAPI()
     app.include_router(views_api.scrub_api_router, prefix="/scrub")
-    app.dependency_overrides[require_admin_key] = lambda: key_info
-    with TestClient(app) as client:
+    with TestClient(app, headers={"X-API-KEY": wallet.adminkey}) as client:
         yield SimpleNamespace(
             client=client,
             wallet=wallet,
+            other_wallet=other_wallet,
             link=link,
+            other_link=other_link,
             lookup=lookup,
-            retrieve=retrieve,
             create=create,
             update=update,
+            delete=delete,
         )
 
 
@@ -60,7 +104,7 @@ def test_link_wallet_must_match_request_wallet(api, method):
         method,
         path,
         json={
-            "wallet": "wallet-two",
+            "wallet": api.other_wallet.id,
             "description": "Updated",
             "payoraddress": "updated@example.com",
         },
@@ -77,7 +121,9 @@ def test_link_wallet_must_match_request_wallet(api, method):
 
 def test_create_link_for_request_wallet(api):
     payload = api.link.model_dump(exclude={"id"})
-    response = api.client.post("/scrub/api/v1/links", json=payload)
+    response = api.client.post(
+        "/scrub/api/v1/links", json={**payload, "id": api.other_link.id}
+    )
 
     assert response.status_code == HTTPStatus.CREATED
     assert response.json() == api.link.model_dump()
@@ -98,9 +144,11 @@ def test_create_link_for_wallet_with_existing_link(api):
 
 
 def test_update_link_for_request_wallet(api):
+    link_id = api.link.id
     response = api.client.put(
-        f"/scrub/api/v1/links/{api.link.id}",
+        f"/scrub/api/v1/links/{link_id}",
         json={
+            "id": api.other_link.id,
             "wallet": api.wallet.id,
             "description": "Updated",
             "payoraddress": "updated@example.com",
@@ -108,6 +156,7 @@ def test_update_link_for_request_wallet(api):
     )
 
     assert response.status_code == HTTPStatus.OK
+    assert response.json()["id"] == link_id
     assert response.json()["wallet"] == api.wallet.id
     assert response.json()["description"] == "Updated"
     assert response.json()["payoraddress"] == "updated@example.com"
@@ -116,9 +165,9 @@ def test_update_link_for_request_wallet(api):
 
 
 def test_update_link_from_another_wallet(api):
-    api.link.wallet = "wallet-two"
+    original = api.other_link.model_dump()
     response = api.client.put(
-        f"/scrub/api/v1/links/{api.link.id}",
+        f"/scrub/api/v1/links/{api.other_link.id}",
         json={
             "wallet": api.wallet.id,
             "description": "Updated",
@@ -128,13 +177,40 @@ def test_update_link_from_another_wallet(api):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json()["detail"] == "Not your pay link."
-    assert api.link.wallet == "wallet-two"
-    assert api.link.description == "Original"
+    assert api.other_link.model_dump() == original
     api.update.assert_not_awaited()
 
 
+@pytest.mark.parametrize("method", ["GET", "DELETE"])
+def test_link_path_is_scoped_to_key_wallet(api, method):
+    path = f"/scrub/api/v1/links/{api.other_link.id}"
+    response = api.client.request(method, path)
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()["detail"] == "Not your pay link."
+    api.delete.assert_not_awaited()
+
+    owner_response = api.client.request(
+        method, path, headers={"X-API-KEY": api.other_wallet.adminkey}
+    )
+    assert owner_response.status_code == HTTPStatus.OK
+    if method == "GET":
+        assert owner_response.json() == api.other_link.model_dump()
+    else:
+        api.delete.assert_awaited_once_with(api.other_link.id)
+
+
+@pytest.mark.parametrize("all_wallets", [False, True])
+def test_link_list_does_not_include_other_users_wallets(api, all_wallets):
+    response = api.client.get(
+        "/scrub/api/v1/links", params={"all_wallets": all_wallets}
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [api.link.model_dump()]
+
+
 def test_update_missing_link(api):
-    api.retrieve.return_value = None
     response = api.client.put(
         "/scrub/api/v1/links/missing",
         json=api.link.model_dump(exclude={"id"}),
