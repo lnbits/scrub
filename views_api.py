@@ -55,44 +55,50 @@ async def api_link_retrieve(
 
 
 @scrub_api_router.post("/api/v1/links", status_code=HTTPStatus.CREATED)
-@scrub_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
-async def api_scrub_create_or_update(
+async def api_scrub_create(
     data: CreateScrubLink,
-    link_id: str | None = None,
-    wallet: WalletTypeInfo = Depends(require_admin_key),
+    key_info: WalletTypeInfo = Depends(require_admin_key),
 ) -> ScrubLink:
-    if data.wallet != wallet.wallet.id:
+    if data.wallet != key_info.wallet.id:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    if link_id:
-        link = await get_scrub_link(link_id)
+    wallet_has_scrub = await get_scrub_by_wallet(wallet_id=data.wallet)
+    if wallet_has_scrub:
+        raise HTTPException(
+            detail="Wallet is already being Scrubbed",
+            status_code=HTTPStatus.FORBIDDEN,
+        )
 
-        if not link:
-            raise HTTPException(
-                detail="Scrub link does not exist.", status_code=HTTPStatus.NOT_FOUND
-            )
+    return await create_scrub_link(data=data)
 
-        if link.wallet != wallet.wallet.id:
-            raise HTTPException(
-                detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
-            )
 
-        link.description = data.description
-        link.payoraddress = data.payoraddress
+@scrub_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+async def api_scrub_update(
+    link_id: str,
+    data: CreateScrubLink,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
+) -> ScrubLink:
+    if data.wallet != key_info.wallet.id:
+        raise HTTPException(
+            detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
+        )
 
-        link = await update_scrub_link(link)
-    else:
-        wallet_has_scrub = await get_scrub_by_wallet(wallet_id=data.wallet)
-        if wallet_has_scrub:
-            raise HTTPException(
-                detail="Wallet is already being Scrubbed",
-                status_code=HTTPStatus.FORBIDDEN,
-            )
-        link = await create_scrub_link(data=data)
+    link = await get_scrub_link(link_id)
+    if not link:
+        raise HTTPException(
+            detail="Scrub link does not exist.", status_code=HTTPStatus.NOT_FOUND
+        )
 
-    return link
+    if link.wallet != key_info.wallet.id:
+        raise HTTPException(
+            detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
+        )
+
+    link.description = data.description
+    link.payoraddress = data.payoraddress
+    return await update_scrub_link(link)
 
 
 @scrub_api_router.delete("/api/v1/links/{link_id}")

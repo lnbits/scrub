@@ -132,15 +132,19 @@ def test_create_link_for_request_wallet(api):
     assert api.create.call_args.kwargs["data"].model_dump() == payload
 
 
-def test_create_link_for_wallet_with_existing_link(api):
+@pytest.mark.parametrize("with_link_id", [False, True])
+def test_create_link_for_wallet_with_existing_link(api, with_link_id):
     api.lookup.return_value = api.link
     response = api.client.post(
-        "/scrub/api/v1/links", json=api.link.model_dump(exclude={"id"})
+        "/scrub/api/v1/links",
+        params={"link_id": api.link.id} if with_link_id else {},
+        json=api.link.model_dump(exclude={"id"}),
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json()["detail"] == "Wallet is already being Scrubbed"
     api.create.assert_not_awaited()
+    api.update.assert_not_awaited()
 
 
 def test_update_link_for_request_wallet(api):
