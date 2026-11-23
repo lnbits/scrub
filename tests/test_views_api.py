@@ -7,6 +7,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from lnbits import decorators
+from lnbits.core.db import db
 from lnbits.core.models import Wallet
 
 from .. import views_api
@@ -31,7 +32,7 @@ def api(monkeypatch):
     )
     wallets = (wallet, other_wallet)
     wallets_by_key = {key: w for w in wallets for key in (w.adminkey, w.inkey)}
-    monkeypatch.setattr(decorators.db, "connect", nullcontext)
+    monkeypatch.setattr(db, "connect", nullcontext)
     monkeypatch.setattr(
         decorators,
         "get_wallet_for_key",
